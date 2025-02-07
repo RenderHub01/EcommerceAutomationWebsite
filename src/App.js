@@ -17,16 +17,17 @@ const App = () => {
     <CartProvider>
       {showNavbar && (
         <>
-          <Navbar onCartClick={() => {}} />
+          <Navbar onCartClick={() => { }} />
         </>
       )}
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/checkout" element={<OrderConfirmation />} />
+        <Route path="/confirmation" element={<OrderConfirmation />} />
         <Route path="/track-order" element={<TrackOrder />} />
         <Route path="/inventory" element={<InventoryManagement />} />
         <Route path="/sales-page" element={<SalesPage />} />
         <Route path="/return" element={<ReturnOrder />} />
+        {/* <Route path="/return" element={<ReturnOrder />} /> */}
       </Routes>
     </CartProvider>
   );

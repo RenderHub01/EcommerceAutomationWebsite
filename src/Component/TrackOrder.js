@@ -1,8 +1,24 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import iPhone from "../assets/R.jpeg";
 import { Link } from "react-router-dom";
 
 const TrackOrder = () => {
+  const [orders, setOrders] = useState([]);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get('http://localhost:10000/get_orders');
+        setOrders(response.data.orders);
+      } catch (error) {
+        console.error('Error fetching orders:', error);
+      }
+    };
+
+    fetchOrders();
+  }, []);
+
   return (
     <section className="bg-white py-8 antialiased text-gray-800 md:py-16">
       <div className="mx-auto max-w-screen-xl px-4 2xl:px-0">
@@ -58,50 +74,14 @@ const TrackOrder = () => {
         <div className="mt-6 sm:mt-8 lg:flex lg:gap-8">
           <div className="w-full divide-y divide-gray-200 overflow-hidden rounded-lg border border-gray-200 dark:divide-orange-500 dark:border-orange-500 lg:max-w-xl xl:max-w-2xl">
             {/* Product Items */}
-            {[
-              {
-                image: iPhone,
-                name: "PC system All in One APPLE iMac (2023)...",
-                productId: "BJ8364850",
-                quantity: 1,
-                price: "$1,499",
-              },
-              {
-                image: iPhone,
-                name: "Restored Apple Watch Series 8 (GPS)...",
-                productId: "BJ8364850",
-                quantity: 2,
-                price: "$598",
-              },
-              {
-                image: iPhone,
-                name: "Sony Playstation 5 Digital Edition Console...",
-                productId: "BJ8364850",
-                quantity: 1,
-                price: "$799",
-              },
-              {
-                image: iPhone,
-                name: "Xbox Series X Diablo IV Bundle...",
-                productId: "BJ8364850",
-                quantity: 1,
-                price: "$699",
-              },
-              {
-                image: iPhone,
-                name: "APPLE iPhone 15 5G phone, 256GB, Gold",
-                productId: "BJ8364850",
-                quantity: 3,
-                price: "$2,997",
-              },
-            ].map((product, index) => (
+            {orders.map((order, index) => (
               <div key={index} className="space-y-4 p-6">
                 <div className="flex items-center gap-6">
                   <a href="/" className="h-14 w-14 shrink-0">
                     <img
                       className="h-full w-full"
-                      src={product.image}
-                      alt={product.name}
+                      src={order.image}
+                      alt={order.product_title}
                     />
                   </a>
 
@@ -109,28 +89,31 @@ const TrackOrder = () => {
                     href="/"
                     className="min-w-0 flex-1 font-medium text-gray-900 hover:underline"
                   >
-                    {product.name}
+                    {order.product_title}
                   </a>
                 </div>
 
                 <div className="flex items-center justify-between gap-4">
                   <p className="text-sm font-normal text-gray-500 dark:text-gray-400">
-                    <span className="font-medium text-orange-500 ">
-                      Product ID:
+                    <span className="font-medium text-orange-500">
+                      Order ID:
                     </span>{" "}
-                    {product.productId}
+                    {order.order_id}
                   </p>
 
                   <div className="flex items-center justify-end gap-4">
                     <p className="text-base font-normal text-gray-900">
-                      x{product.quantity}
-                    </p>
-
-                    <p className="text-xl font-bold leading-tight text-gray-900 ">
-                      {product.price}
+                      Status: {order.current_status}
                     </p>
                   </div>
                 </div>
+
+                <p className="text-sm text-gray-500">
+                  Delivery Date: {order.delivery_date}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Email: {order.email}
+                </p>
               </div>
             ))}
 
@@ -179,7 +162,7 @@ const TrackOrder = () => {
                     description: "Package delivered to recipient address",
                     icon: (
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M5 13l4 4L19 7" />
                       </svg>
                     )
@@ -191,7 +174,7 @@ const TrackOrder = () => {
                     description: "Package is out for delivery",
                     icon: (
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
                       </svg>
                     )
@@ -203,7 +186,7 @@ const TrackOrder = () => {
                     description: "Package arrived at local facility",
                     icon: (
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M13 10V3L4 14h7v7l9-11h-7z" />
                       </svg>
                     )
@@ -215,38 +198,38 @@ const TrackOrder = () => {
                     description: "Package has left the warehouse",
                     icon: (
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
                       </svg>
                     )
                   },
                   {
                     status: "Order Confirmed",
-                    date: "March 21, 2024",
+                    date: "March 21, 4",
                     time: "3:20 PM",
                     description: "Order has been confirmed",
                     icon: (
                       <svg className="h-4 w-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" 
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
                           d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
                     )
                   },
                 ].map((item, index) => (
-                    <li key={index} className="mb-6 ms-6">
-                      <span className="absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 ring-8 ring-white">
-                        {item.icon}
-                      </span>
-                      <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900">
-                        {item.status}
-                      </h3>
-                      <time className="mb-2 block text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
-                        {item.date} at {item.time}
-                      </time>
-                      <p className="text-base font-normal text-gray-500 dark:text-gray-400">
-                        {item.description}
-                      </p>
-                    </li>
+                  <li key={index} className="mb-6 ms-6">
+                    <span className="absolute -start-3 flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 ring-8 ring-white">
+                      {item.icon}
+                    </span>
+                    <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900">
+                      {item.status}
+                    </h3>
+                    <time className="mb-2 block text-sm font-normal leading-none text-gray-400 dark:text-gray-500">
+                      {item.date} at {item.time}
+                    </time>
+                    <p className="text-base font-normal text-gray-500 dark:text-gray-400">
+                      {item.description}
+                    </p>
+                  </li>
                 ))}
               </ol>
 

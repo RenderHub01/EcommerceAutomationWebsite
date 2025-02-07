@@ -1,130 +1,26 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
-import iPhone from "../assets/R.jpeg";
 
 const SalesPage = () => {
-  const [products] = useState([
-    {
-      id: 1,
-      image: iPhone,
-      name: "Solid Lapel Neck Blouse",
-      category: "CLOTHING",
-      sku: "TS38790",
-      variant: "11 (Varies on: Size, Color)",
-      price: "$24",
-      status: "UnSold",
-    },
-    {
-      id: 2,
-      image: iPhone,
-      name: "Point Toe Heeled Pumps",
-      category: "SHOES",
-      sku: "TS38843",
-      variant: "4 (Varies on: Size)",
-      price: "$56",
-      status: "Sold",
-    },
-    {
-      id: 3,
-      image: iPhone,
-      name: "Solid Rib-knit Crop Cami Top",
-      category: "CLOTHING",
-      sku: "TS12334",
-      variant: "8 (Varies on: Size, Color)",
-      price: "$19",
-      status: "Sold",
-    },
-    {
-      id: 4,
-      image: iPhone,
-      name: "Crop Tank Top",
-      category: "CLOTHING",
-      sku: "TS77545",
-      variant: "4 (Varies on: Size, Material)",
-      price: "$19",
-      status: "UnSold",
-    },
-    {
-      id: 5,
-      image: iPhone,
-      name: "V-Neck Rib-knit Top",
-      category: "CLOTHING",
-      sku: "TS54358",
-      variant: "7 (Varies on: Color, Material)",
-      price: "$13",
-      status: "UnSold",
-    },
-    {
-      id: 6,
-      image: iPhone,
-      name: "Minimalist Flap Chain Bag",
-      category: "BAG",
-      sku: "TS00213",
-      variant: "2 (Varies on: Color)",
-      price: "$32",
-      status: "UnSold",
-    },
-    {
-      id: 7,
-      image: iPhone,
-      name: "Front Crop Top",
-      category: "CLOTHING",
-      sku: "TS36940",
-      variant: "2 (Varies on: Color)",
-      price: "$17",
-      status: "UnSold",
-    },
-    {
-      id: 8,
-      image: iPhone,
-      name: "Schiffy Drawstring Crop Top",
-      category: "CLOTHING",
-      sku: "TS13346",
-      variant: "5 (Varies on: Size, Color)",
-      price: "$21",
-      status: "UnSold",
-    },
-    {
-      id: 9,
-      image: iPhone,
-      name: "Pineapple Earrings",
-      category: "JEWELRY",
-      sku: "TS84323",
-      variant: "2 (Varies on: Color)",
-      price: "$8",
-      status: "Sold",
-    },
-    {
-      id: 10,
-      image: iPhone,
-      name: "Floral Shirred Top",
-      category: "CLOTHING",
-      sku: "TS84432",
-      variant: "8 (Varies on: Size, Color)",
-      price: "$19",
-      status: "UnSold",
-    },
-    {
-        id: 11,
-        image: iPhone,
-        name: "Floral Shirred Top",
-        category: "CLOTHING",
-        sku: "TS84432",
-        variant: "8 (Varies on: Size, Color)",
-        price: "$19",
-        status: "UnSold",
-      },
-      {
-        id: 12,
-        image: iPhone,
-        name: "Iphone 16 pro",
-        category: "CLOTHING",
-        sku: "TS84432",
-        variant: "8 (Varies on: Size, Color)",
-        price: "$19",
-        status: "UnSold",
-      },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const response = await axios.get('http://localhost:10000/get_orders');
+        setOrders(response.data.orders);
+        setLoading(false);
+      } catch (err) {
+        setError(err.message);
+        setLoading(false);
+      }
+    };
+
+    fetchOrders();
+  }, []);
 
   const [selectAll, setSelectAll] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -148,15 +44,15 @@ const SalesPage = () => {
 
   const handleSelectAll = () => {
     setSelectAll(!selectAll);
-    setSelectedItems(selectAll ? [] : products.map((product) => product.id));
+    setSelectedItems(selectAll ? [] : orders.map((order) => order._id));
   };
 
-  const handleSelectItem = (productId) => {
+  const handleSelectItem = (orderId) => {
     setSelectedItems((prevSelected) => {
-      if (prevSelected.includes(productId)) {
-        return prevSelected.filter((id) => id !== productId);
+      if (prevSelected.includes(orderId)) {
+        return prevSelected.filter((id) => id !== orderId);
       } else {
-        return [...prevSelected, productId];
+        return [...prevSelected, orderId];
       }
     });
   };
@@ -166,35 +62,42 @@ const SalesPage = () => {
     setCurrentPage(1);
   };
 
-  const handleDropdownClick = (productId) => {
-    setActiveDropdown(activeDropdown === productId ? null : productId);
+  const handleDropdownClick = (orderId) => {
+    setActiveDropdown(activeDropdown === orderId ? null : orderId);
   };
 
-  const handleStatusChange = (productId, newStatus) => {
+  const handleStatusChange = (orderId, newStatus) => {
     // Add your status change logic here
-    console.log(`Changing status of product ${productId} to ${newStatus}`);
+    console.log(`Changing status of order ${orderId} to ${newStatus}`);
     setActiveDropdown(null);
   };
 
-  const handleDeleteProduct = (productId) => {
-    // Add your delete logic here
-    console.log(`Deleting product ${productId}`);
-    setActiveDropdown(null);
+  const handleDeleteProduct = async (orderId) => {
+    try {
+      await axios.delete(`http://localhost:10000/delete_order/${orderId}`);
+      // Refresh orders after deletion
+      const response = await axios.get('http://localhost:10000/get_orders');
+      setOrders(response.data.orders);
+      setActiveDropdown(null);
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      // You might want to show an error message to the user
+    }
   };
 
-  // Filter products based on search
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
+  // Filter orders based on search
+  const filteredOrders = orders.filter((order) =>
+    order.product_title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    order.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Pagination logic
   const itemsPerPage = 8;
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredProducts.slice(indexOfFirstItem, indexOfLastItem);
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const currentItems = filteredOrders.slice(indexOfFirstItem, indexOfLastItem);
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
 
   const handlePageChange = (pageNumber) => {
     setCurrentPage(pageNumber);
@@ -211,6 +114,24 @@ const SalesPage = () => {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-orange-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-red-500 text-xl">
+          Error: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4">
@@ -284,11 +205,11 @@ const SalesPage = () => {
         </div>
 
         {/* Action Buttons */}
-        
+
       </div>
 
       {/* Table */}
-      <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+      <div className="relative overflow-visible shadow-md sm:rounded-lg">
         <table className="w-full text-sm text-left text-gray-500">
           <thead className="text-xs text-white uppercase bg-orange-500">
             <tr>
@@ -302,93 +223,68 @@ const SalesPage = () => {
                   />
                 </div>
               </th>
-              <th scope="col" className="px-6 py-3">Image</th>
-              <th scope="col" className="px-6 py-3 text-center">Product Name</th>
-              <th scope="col" className="px-6 py-3 text-center">Category</th>
-              <th scope="col" className="px-6 py-3 text-center">SKU</th>
-              <th scope="col" className="px-6 py-3 text-center">Variant</th>
-              <th scope="col" className="px-6 py-3 text-center">Price</th>
-              <th scope="col" className="px-6 py-3 text-center">Status</th>
-              <th scope="col" className="px-6 py-3 text-center">Action</th>
+              <th scope="col" className="px-6 py-3">Order ID</th>
+              <th scope="col" className="px-6 py-3">Product Title</th>
+              <th scope="col" className="px-6 py-3">Email</th>
+              <th scope="col" className="px-6 py-3">Delivery Date</th>
+              <th scope="col" className="px-6 py-3">Status</th>
+              <th scope="col" className="px-6 py-3">Action</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((product) => (
-              <tr key={product.id} className="bg-white border-b hover:bg-gray-50">
+            {currentItems.map((order) => (
+              <tr key={order._id} className="bg-white border-b hover:bg-gray-50">
                 <td className="w-4 p-4">
                   <div className="flex items-center">
                     <input
                       type="checkbox"
-                      checked={selectedItems.includes(product.id)}
-                      onChange={() => handleSelectItem(product.id)}
+                      checked={selectedItems.includes(order._id)}
+                      onChange={() => handleSelectItem(order._id)}
                       className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
                     />
                   </div>
                 </td>
+                <td className="px-6 py-4 font-medium text-gray-900">{order.order_id}</td>
+                <td className="px-6 py-4">{order.product_title}</td>
+                <td className="px-6 py-4">{order.email}</td>
+                <td className="px-6 py-4">{order.delivery_date}</td>
                 <td className="px-6 py-4">
-                  <div className="h-10 w-10">
-                    <img
-                      className="h-10 w-10 rounded-full object-cover"
-                      src={product.image || 'https://via.placeholder.com/40'}
-                      alt={product.name}
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 text-center">{product.name}</td>
-                <td className="px-6 py-4 text-center">{product.category}</td>
-                <td className="px-6 py-4 text-center">{product.sku}</td>
-                <td className="px-6 py-4 text-center">{product.variant}</td>
-                <td className="px-6 py-4 text-center">{product.price}</td>
-                <td className="px-6 py-4 text-center">
                   <span
-                    className={`inline-block w-[120px] text-center px-4 py-1 rounded-full text-sm font-semibold ${
-                      product.status === 'Unsold'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-red-100 text-red-600'
-                    }`}
+                    className={`inline-block px-4 py-1 rounded-full text-sm font-semibold ${order.current_status === 'Delivered'
+                      ? 'bg-green-100 text-green-600'
+                      : 'bg-yellow-100 text-yellow-600'
+                      }`}
                   >
-                    {product.status}
+                    {order.current_status}
                   </span>
                 </td>
-                <td className="px-6 py-4 relative text-center">
-                  <div ref={dropdownRef}>
-                    <button 
-                      onClick={() => handleDropdownClick(product.id)}
+                <td className="px-6 py-4 relative">
+                  <div className="relative" ref={dropdownRef}>
+                    <button
+                      onClick={() => handleDropdownClick(order._id)}
                       className="font-medium text-blue-600 hover:underline"
                     >
                       Edit
                     </button>
-                    
-                    <div 
-                      className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 transition-all duration-200 ease-in-out transform origin-top-right ${
-                        activeDropdown === product.id ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
-                      }`}
-                    >
-                      <div className="py-1" role="menu" aria-orientation="vertical">
-                        <button
-                          onClick={() => handleStatusChange(product.id, 'Active')}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <span className="inline-block w-full px-4 py-1 rounded-full text-center text-sm font-semibold bg-green-100 text-green-600">
-                            Unsold
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(product.id, 'Out of Stock')}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <span className="inline-block w-full px-4 py-1 rounded-full text-sm text-center font-semibold bg-red-100 text-red-600">
-                          Sold
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="w-full px-4 py-2 text-sm text-center text-red-600 hover:bg-red-50 font-medium"
-                        >
-                          Delete
-                        </button>
+                    {activeDropdown === order._id && (
+                      <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                        style={{ minWidth: '200px' }}>
+                        <div className="py-1">
+                          <button
+                            onClick={() => handleStatusChange(order._id, 'Delivered')}
+                            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+                          >
+                            Mark as Delivered
+                          </button>
+                          <button
+                            onClick={() => handleDeleteProduct(order._id)}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Delete Order
+                          </button>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -401,17 +297,16 @@ const SalesPage = () => {
       <nav className="flex items-center flex-column flex-wrap md:flex-row justify-between pt-4">
         <span className="text-sm font-normal text-gray-500 mb-4 md:mb-0 block w-full md:inline md:w-auto">
           Showing <span className="font-semibold text-gray-900">
-            {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredProducts.length)}
-          </span> of <span className="font-semibold text-gray-900">{filteredProducts.length}</span>
+            {indexOfFirstItem + 1}-{Math.min(indexOfLastItem, filteredOrders.length)}
+          </span> of <span className="font-semibold text-gray-900">{filteredOrders.length}</span>
         </span>
         <ul className="inline-flex -space-x-px rtl:space-x-reverse text-sm h-8">
           <li>
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 ${
-                currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+                }`}
             >
               Previous
             </button>
@@ -420,11 +315,10 @@ const SalesPage = () => {
             <li key={index}>
               <button
                 onClick={() => handlePageChange(index + 1)}
-                className={`flex items-center justify-center px-3 h-8 leading-tight border border-gray-300 ${
-                  currentPage === index + 1
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700'
-                    : 'text-gray-500 bg-white hover:bg-gray-100'
-                }`}
+                className={`flex items-center justify-center px-3 h-8 leading-tight border border-gray-300 ${currentPage === index + 1
+                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700'
+                  : 'text-gray-500 bg-white hover:bg-gray-100'
+                  }`}
               >
                 {index + 1}
               </button>
@@ -434,9 +328,8 @@ const SalesPage = () => {
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 ${
-                currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
+                }`}
             >
               Next
             </button>

@@ -1,130 +1,77 @@
 import React, { useState, useEffect, useRef } from "react";
+import axios from "axios";
 import { Link } from "react-router-dom";
 import iPhone from "../assets/R.jpeg";
 
 const InventoryManagement = () => {
-  const [products] = useState([
-    {
-      id: 1,
-      image: iPhone,
-      name: "Solid Lapel Neck Blouse",
-      category: "CLOTHING",
-      sku: "TS38790",
-      variant: "11 (Varies on: Size, Color)",
-      price: "$24",
-      status: "Active",
-    },
-    {
-      id: 2,
-      image: iPhone,
-      name: "Point Toe Heeled Pumps",
-      category: "SHOES",
-      sku: "TS38843",
-      variant: "4 (Varies on: Size)",
-      price: "$56",
-      status: "Out of Stock",
-    },
-    {
-      id: 3,
-      image: iPhone,
-      name: "Solid Rib-knit Crop Cami Top",
-      category: "CLOTHING",
-      sku: "TS12334",
-      variant: "8 (Varies on: Size, Color)",
-      price: "$19",
-      status: "Out of Stock",
-    },
-    {
-      id: 4,
-      image: iPhone,
-      name: "Crop Tank Top",
-      category: "CLOTHING",
-      sku: "TS77545",
-      variant: "4 (Varies on: Size, Material)",
-      price: "$19",
-      status: "Active",
-    },
-    {
-      id: 5,
-      image: iPhone,
-      name: "V-Neck Rib-knit Top",
-      category: "CLOTHING",
-      sku: "TS54358",
-      variant: "7 (Varies on: Color, Material)",
-      price: "$13",
-      status: "Active",
-    },
-    {
-      id: 6,
-      image: iPhone,
-      name: "Minimalist Flap Chain Bag",
-      category: "BAG",
-      sku: "TS00213",
-      variant: "2 (Varies on: Color)",
-      price: "$32",
-      status: "Active",
-    },
-    {
-      id: 7,
-      image: iPhone,
-      name: "Front Crop Top",
-      category: "CLOTHING",
-      sku: "TS36940",
-      variant: "2 (Varies on: Color)",
-      price: "$17",
-      status: "Active",
-    },
-    {
-      id: 8,
-      image: iPhone,
-      name: "Schiffy Drawstring Crop Top",
-      category: "CLOTHING",
-      sku: "TS13346",
-      variant: "5 (Varies on: Size, Color)",
-      price: "$21",
-      status: "Active",
-    },
-    {
-      id: 9,
-      image: iPhone,
-      name: "Pineapple Earrings",
-      category: "JEWELRY",
-      sku: "TS84323",
-      variant: "2 (Varies on: Color)",
-      price: "$8",
-      status: "Out of Stock",
-    },
-    {
-      id: 10,
-      image: iPhone,
-      name: "Floral Shirred Top",
-      category: "CLOTHING",
-      sku: "TS84432",
-      variant: "8 (Varies on: Size, Color)",
-      price: "$19",
-      status: "Active",
-    },
-    {
-        id: 11,
-        image: iPhone,
-        name: "Floral Shirred Top",
-        category: "CLOTHING",
-        sku: "TS84432",
-        variant: "8 (Varies on: Size, Color)",
-        price: "$19",
-        status: "Active",
-      },
-      {
-        id: 12,
-        image: iPhone,
-        name: "Iphone 16 pro",
-        category: "CLOTHING",
-        sku: "TS84432",
-        variant: "8 (Varies on: Size, Color)",
-        price: "$19",
-        status: "Active",
-      },
-  ]);
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showSellForm, setShowSellForm] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [sellFormData, setSellFormData] = useState({
+    order_id: '',
+    selling_price: '',
+    buyer_name: '',
+    buyer_contact: ''
+  });
+
+  useEffect(() => {
+    fetchProducts();
+  }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const response = await axios.get('http://localhost:10000/get_products');
+      setProducts(response.data.products);
+      setLoading(false);
+    } catch (err) {
+      setError(err.message);
+      setLoading(false);
+    }
+  };
+
+  const handleDeleteProduct = async (productId) => {
+    try {
+      await axios.delete(`http://localhost:10000/delete_product/${productId}`);
+      fetchProducts(); // Refresh products list
+      setActiveDropdown(null);
+    } catch (error) {
+      console.error('Error deleting product:', error);
+    }
+  };
+
+  const handleDeleteAllProducts = async () => {
+    try {
+      await axios.delete('http://localhost:10000/delete_all_products');
+      fetchProducts();
+    } catch (error) {
+      console.error('Error deleting all products:', error);
+    }
+  };
+
+  const handleSellProduct = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post('http://localhost:10000/sell_product', {
+        ...sellFormData,
+        product_id: selectedProduct._id
+      });
+
+      // Handle successful sale
+      console.log('Product sold:', response.data);
+      setShowSellForm(false);
+      setSellFormData({
+        order_id: '',
+        selling_price: '',
+        buyer_name: '',
+        buyer_contact: ''
+      });
+      fetchProducts(); // Refresh products list
+    } catch (error) {
+      console.error('Error selling product:', error);
+    }
+  };
 
   const [selectAll, setSelectAll] = useState(false);
   const [selectedItems, setSelectedItems] = useState([]);
@@ -176,18 +123,17 @@ const InventoryManagement = () => {
     setActiveDropdown(null);
   };
 
-  const handleDeleteProduct = (productId) => {
-    // Add your delete logic here
-    console.log(`Deleting product ${productId}`);
-    setActiveDropdown(null);
-  };
+  // Update the filtering logic to match API data structure
+  const filteredProducts = products.filter((product) => {
+    if (!product) return false;
 
-  // Filter products based on search
-  const filteredProducts = products.filter((product) =>
-    product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.sku.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    product.category.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (product.title?.toLowerCase() || '').includes(searchLower) ||
+      (product._id?.toLowerCase() || '').includes(searchLower) ||
+      (product.price?.toLowerCase() || '').includes(searchLower)
+    );
+  });
 
   // Pagination logic
   const itemsPerPage = 8;
@@ -212,6 +158,171 @@ const InventoryManagement = () => {
     }
   };
 
+  // Add Sell Form Modal
+  const SellFormModal = () => (
+    <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+      <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Sell Product</h3>
+          <button
+            onClick={() => setShowSellForm(false)}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ×
+          </button>
+        </div>
+        <form onSubmit={handleSellProduct}>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Order ID</label>
+              <input
+                type="text"
+                value={sellFormData.order_id}
+                onChange={(e) => setSellFormData({ ...sellFormData, order_id: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Selling Price</label>
+              <input
+                type="number"
+                value={sellFormData.selling_price}
+                onChange={(e) => setSellFormData({ ...sellFormData, selling_price: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Buyer Name</label>
+              <input
+                type="text"
+                value={sellFormData.buyer_name}
+                onChange={(e) => setSellFormData({ ...sellFormData, buyer_name: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700">Buyer Contact</label>
+              <input
+                type="text"
+                value={sellFormData.buyer_contact}
+                onChange={(e) => setSellFormData({ ...sellFormData, buyer_contact: e.target.value })}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-orange-500 focus:ring-orange-500"
+                required
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={() => setShowSellForm(false)}
+                className="px-4 py-2 text-sm border rounded-md text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="px-4 py-2 text-sm text-white bg-orange-500 rounded-md hover:bg-orange-600"
+              >
+                Sell Product
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  // Modify the dropdown menu in the table to include Sell option
+  const renderDropdownContent = (product) => (
+    <div className="py-1" role="menu" aria-orientation="vertical">
+      <button
+        onClick={() => {
+          setSelectedProduct(product);
+          setShowSellForm(true);
+          setActiveDropdown(null);
+        }}
+        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
+      >
+        <span className="inline-block w-full px-4 py-1 rounded-full text-center text-sm font-semibold bg-green-100 text-green-600">
+          Sell Product
+        </span>
+      </button>
+      <button
+        onClick={() => handleDeleteProduct(product._id)}
+        className="w-full px-4 py-2 text-sm text-center text-red-600 hover:bg-red-50 font-medium"
+      >
+        Delete
+      </button>
+    </div>
+  );
+
+  // Update the product rendering function to match API data structure
+  const renderProduct = (product) => {
+    if (!product) return null;
+
+    return (
+      <tr key={product._id} className="bg-white border-b hover:bg-gray-50">
+        <td className="w-4 p-4">
+          <div className="flex items-center">
+            <input
+              type="checkbox"
+              checked={selectedItems.includes(product._id)}
+              onChange={() => handleSelectItem(product._id)}
+              className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
+            />
+          </div>
+        </td>
+        <td className="px-6 py-4">
+          <div className="h-10 w-10">
+            <img
+              className="h-10 w-10 rounded-full object-cover"
+              src={product.main_image || 'https://via.placeholder.com/40'}
+              alt={product.title}
+            />
+          </div>
+        </td>
+        <td className="px-6 py-4 font-medium text-gray-900 text-center">
+          {product.title || 'N/A'}
+        </td>
+        <td className="px-6 py-4 text-center">
+          <a href={product.link} target="_blank" rel="noopener noreferrer"
+            className="text-blue-600 hover:underline">
+            View on Amazon
+          </a>
+        </td>
+        <td className="px-6 py-4 text-center">{product._id || 'N/A'}</td>
+        <td className="px-6 py-4 text-center">
+          {product.price_history?.length || 0} variants
+        </td>
+        <td className="px-6 py-4 text-center">₹{product.price || 'N/A'}</td>
+        <td className="px-6 py-4 text-center">
+          <span className={`inline-block w-[120px] text-center px-4 py-1 rounded-full text-sm font-semibold 
+            ${product.numerical_price > 1000 ? 'bg-green-100 text-green-600' : 'bg-yellow-100 text-yellow-600'}`}>
+            {product.numerical_price > 1000 ? 'High Value' : 'Low Value'}
+          </span>
+        </td>
+        <td className="px-6 py-4 relative text-center">
+          <div ref={dropdownRef}>
+            <button
+              onClick={() => handleDropdownClick(product._id)}
+              className="font-medium text-blue-600 hover:underline"
+            >
+              Actions
+            </button>
+            {activeDropdown === product._id && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                {renderDropdownContent(product)}
+              </div>
+            )}
+          </div>
+        </td>
+      </tr>
+    );
+  };
+
+  // Update the table body to use the new renderProduct function
   return (
     <div className="p-4">
       {/* Back to Home Button */}
@@ -294,6 +405,16 @@ const InventoryManagement = () => {
         </div>
       </div>
 
+      {/* Add Delete All button */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={handleDeleteAllProducts}
+          className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg"
+        >
+          Delete All Products
+        </button>
+      </div>
+
       {/* Table */}
       <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
         <table className="w-full text-sm text-left text-gray-500">
@@ -310,96 +431,17 @@ const InventoryManagement = () => {
                 </div>
               </th>
               <th scope="col" className="px-6 py-3">Image</th>
-              <th scope="col" className="px-6 py-3 text-center">Product Name</th>
-              <th scope="col" className="px-6 py-3 text-center">Category</th>
-              <th scope="col" className="px-6 py-3 text-center">SKU</th>
-              <th scope="col" className="px-6 py-3 text-center">Variant</th>
+              <th scope="col" className="px-6 py-3 text-center">Product Title</th>
+              <th scope="col" className="px-6 py-3 text-center">Link</th>
+              <th scope="col" className="px-6 py-3 text-center">Product ID</th>
+              <th scope="col" className="px-6 py-3 text-center">Variants</th>
               <th scope="col" className="px-6 py-3 text-center">Price</th>
               <th scope="col" className="px-6 py-3 text-center">Status</th>
               <th scope="col" className="px-6 py-3 text-center">Action</th>
             </tr>
           </thead>
           <tbody>
-            {currentItems.map((product) => (
-              <tr key={product.id} className="bg-white border-b hover:bg-gray-50">
-                <td className="w-4 p-4">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedItems.includes(product.id)}
-                      onChange={() => handleSelectItem(product.id)}
-                      className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500"
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="h-10 w-10">
-                    <img
-                      className="h-10 w-10 rounded-full object-cover"
-                      src={product.image || 'https://via.placeholder.com/40'}
-                      alt={product.name}
-                    />
-                  </div>
-                </td>
-                <td className="px-6 py-4 font-medium text-gray-900 text-center">{product.name}</td>
-                <td className="px-6 py-4 text-center">{product.category}</td>
-                <td className="px-6 py-4 text-center">{product.sku}</td>
-                <td className="px-6 py-4 text-center">{product.variant}</td>
-                <td className="px-6 py-4 text-center">{product.price}</td>
-                <td className="px-6 py-4 text-center">
-                  <span
-                    className={`inline-block w-[120px] text-center px-4 py-1 rounded-full text-sm font-semibold ${
-                      product.status === 'Active'
-                        ? 'bg-green-100 text-green-600'
-                        : 'bg-red-100 text-red-600'
-                    }`}
-                  >
-                    {product.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 relative text-center">
-                  <div ref={dropdownRef}>
-                    <button 
-                      onClick={() => handleDropdownClick(product.id)}
-                      className="font-medium text-blue-600 hover:underline"
-                    >
-                      Edit
-                    </button>
-                    
-                    <div 
-                      className={`absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-10 transition-all duration-200 ease-in-out transform origin-top-right ${
-                        activeDropdown === product.id ? 'scale-100 opacity-100' : 'scale-95 opacity-0 pointer-events-none'
-                      }`}
-                    >
-                      <div className="py-1" role="menu" aria-orientation="vertical">
-                        <button
-                          onClick={() => handleStatusChange(product.id, 'Active')}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <span className="inline-block w-full px-4 py-1 rounded-full text-center text-sm font-semibold bg-green-100 text-green-600">
-                            Active
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleStatusChange(product.id, 'Out of Stock')}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-100"
-                        >
-                          <span className="inline-block w-full px-4 py-1 rounded-full text-sm text-center font-semibold bg-red-100 text-red-600">
-                            Out of Stock
-                          </span>
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="w-full px-4 py-2 text-sm text-center text-red-600 hover:bg-red-50 font-medium"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {currentItems.map((product) => renderProduct(product))}
           </tbody>
         </table>
       </div>
@@ -416,9 +458,8 @@ const InventoryManagement = () => {
             <button
               onClick={handlePrevious}
               disabled={currentPage === 1}
-              className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 ${
-                currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              className={`flex items-center justify-center px-3 h-8 ms-0 leading-tight text-gray-500 bg-white border border-gray-300 rounded-s-lg hover:bg-gray-100 ${currentPage === 1 ? 'cursor-not-allowed opacity-50' : ''
+                }`}
             >
               Previous
             </button>
@@ -427,11 +468,10 @@ const InventoryManagement = () => {
             <li key={index}>
               <button
                 onClick={() => handlePageChange(index + 1)}
-                className={`flex items-center justify-center px-3 h-8 leading-tight border border-gray-300 ${
-                  currentPage === index + 1
-                    ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700'
-                    : 'text-gray-500 bg-white hover:bg-gray-100'
-                }`}
+                className={`flex items-center justify-center px-3 h-8 leading-tight border border-gray-300 ${currentPage === index + 1
+                  ? 'text-blue-600 bg-blue-50 hover:bg-blue-100 hover:text-blue-700'
+                  : 'text-gray-500 bg-white hover:bg-gray-100'
+                  }`}
               >
                 {index + 1}
               </button>
@@ -441,15 +481,17 @@ const InventoryManagement = () => {
             <button
               onClick={handleNext}
               disabled={currentPage === totalPages}
-              className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 ${
-                currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
-              }`}
+              className={`flex items-center justify-center px-3 h-8 leading-tight text-gray-500 bg-white border border-gray-300 rounded-e-lg hover:bg-gray-100 ${currentPage === totalPages ? 'cursor-not-allowed opacity-50' : ''
+                }`}
             >
               Next
             </button>
           </li>
         </ul>
       </nav>
+
+      {/* Sell Form Modal */}
+      {showSellForm && <SellFormModal />}
     </div>
   );
 };

@@ -19,7 +19,7 @@ const HeroSection = ({ onAddToCart }) => {  // ✅ Accept onAddToCart as a prop
     setLoading(true);
 
     try {
-      const response = await fetch("http://localhost:5000/scrape_amazon", {
+      const response = await fetch("http://localhost:10000/scrape_amazon", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -62,7 +62,7 @@ const HeroSection = ({ onAddToCart }) => {  // ✅ Accept onAddToCart as a prop
         <source src={HomeVideo} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
-      
+
       {/* Add an overlay to ensure text is readable */}
       <div className="absolute top-0 left-0 w-full h-full bg-black opacity-50 z-10"></div>
 

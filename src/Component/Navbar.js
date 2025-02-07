@@ -52,7 +52,7 @@ const Navbar = ({ onCartClick, cartItems = [] }) => {  // Initialize cartItems a
                   <span>About Us</span>
                 </a>
               </li>
-              
+
               <li className="p-5 xl:p-8">
                 <Link
                   to="/track-order"
@@ -63,10 +63,10 @@ const Navbar = ({ onCartClick, cartItems = [] }) => {  // Initialize cartItems a
               </li>
               <li className="p-5 xl:p-8">
                 <a
-                  href="/return"
+                  href="/confirmation"
                   className="text-white hover:text-gray-300 transition-colors"
                 >
-                  <span>Return Order</span>
+                  <span>Order confirmation</span>
                 </a>
               </li>
               <li className="p-5 xl:p-8">
@@ -82,7 +82,7 @@ const Navbar = ({ onCartClick, cartItems = [] }) => {  // Initialize cartItems a
 
           {/* Login, Sign Up, and Cart */}
           <div className="flex items-center space-x-2 md:space-x-4">
-            
+
             <Link
               to="/inventory"
               className="flex items-center space-x-2 text-white hover:text-gray-300 transition-colors"
